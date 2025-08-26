@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TFUK Order Parser</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    
+    <style>
+        .validation-error {
+            background-color: #fff2f2;
+            border-left: 4px solid #dc3545;
+        }
+        .validation-warning {
+            background-color: #fff8e1;
+            border-left: 4px solid #ffc107;
+        }
+        .validation-success {
+            background-color: #f0f9f0;
+            border-left: 4px solid #28a745;
+        }
+        .order-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .order-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            padding: 1rem;
+            border-radius: 8px 8px 0 0;
+        }
+        .line-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .line-item:last-child {
+            border-bottom: none;
+        }
+        .stats-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+        .stats-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .stats-col {
+            flex: 1;
+            min-width: 200px;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .copy-btn {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .copy-btn:hover {
+            transform: scale(1.1);
+        }
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mb-4">
+                    <i class="fas fa-file-alt me-2"></i>
+                    TFUK Order Parser & Validator
+                </h1>
+            </div>
+        </div>
+
+        <!-- File Upload Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="text-center">
+                            <i class="fas fa-file-alt fa-3x mb-3 text-muted"></i>
+                            <h5>Select TFUK EDI File</h5>
+                            <p class="text-muted">Choose a .txt file in TFUK EDI format</p>
+                            <input type="file" id="fileInput" accept=".txt" class="form-control" style="max-width: 400px; margin: 0 auto;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls Section -->
+        <div class="row mb-4" id="controlsSection" style="display: none;">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="hideValidToggle">
+                                <label class="form-check-label" for="hideValidToggle">
+                                    Hide valid orders
+                                </label>
+                            </div>
+                            <div>
+                                <button class="btn btn-outline-secondary" id="copyInvalidBtn" style="display: none;">
+                                    <i class="fas fa-copy me-2"></i>Copy Invalid Orders
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Section -->
+        <div class="row mb-4" id="statsSection" style="display: none;">
+            <div class="col-12">
+                <div class="stats-row">
+                    <div class="stats-col">
+                        <div class="card stats-card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-shopping-cart fa-2x mb-2 text-primary"></i>
+                                <h4 class="mb-0 text-dark" id="totalOrders">0</h4>
+                                <small class="text-muted">Total Orders</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stats-col">
+                        <div class="card stats-card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+                                <h4 class="mb-0 text-dark" id="validOrders">0</h4>
+                                <small class="text-muted">Valid Orders</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stats-col">
+                        <div class="card stats-card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-2 text-warning"></i>
+                                <h4 class="mb-0 text-dark" id="warningOrders">0</h4>
+                                <small class="text-muted">With Warnings</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stats-col">
+                        <div class="card stats-card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-times-circle fa-2x mb-2 text-danger"></i>
+                                <h4 class="mb-0 text-dark" id="invalidOrders">0</h4>
+                                <small class="text-muted">Invalid Orders</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Section -->
+        <div class="row" id="ordersSection" style="display: none;">
+            <div class="col-12">
+                <div id="ordersContainer">
+                    <!-- Orders will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
