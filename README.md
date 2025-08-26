@@ -5,7 +5,8 @@ A web-based application for parsing and validating Taylor & Francis UK (TFUK) ED
 ## Features
 
 - **Automatic File Parsing**: Upload .txt files in TFUK EDI format for immediate processing
-- **Comprehensive Validation**: Validates order headers, customer information, payment terms, and line items
+- **Contact-Focused Validation**: Validates customer contact information and addresses with focus on completeness
+- **Amazon Order Handling**: Automatically skips email validation for Amazon orders (direct warehouse delivery)
 - **Visual Status Indicators**: Color-coded cards show validation status at a glance
 - **Filter Controls**: Toggle to hide valid orders and focus on problematic ones
 - **Order Details Preview**: View customer names, addresses, postcodes, phone numbers, and email addresses
@@ -62,17 +63,17 @@ Note: The application has been specifically optimized for Safari compatibility.
 - Address line 1 is required
 - City is required
 - Postal code is recommended
-- Email format must be valid when present
+- Email format must be valid when present (automatically skipped for Amazon orders)
 - Phone number is recommended
-
-### Payment Terms (H3 Records)
-- Must be FCA (Free Carrier) or DAP (Delivered at Place)
 
 ### Line Items (D1 Records)
 - ISBN must be valid 13-digit format starting with 978 or 979
 - Quantity must be greater than 0
 - Price must be greater than 0
 - Item reference is recommended
+
+### Special Handling
+- **Amazon Orders**: Email validation is automatically skipped for orders containing "Amazon" in the customer name, as these orders are delivered directly to Amazon warehouses
 
 ## File Structure
 

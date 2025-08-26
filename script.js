@@ -166,6 +166,9 @@ class TFUKParser {
             order.validationErrors.push('No customer information found');
         } else {
             order.customers.forEach((customer, index) => {
+                // Check if this is an Amazon order by looking at customer name
+                var isAmazonOrder = customer.customerName.toLowerCase().includes('amazon');
+                
                 if (!customer.customerName.trim()) {
                     order.validationErrors.push(`Customer ${index + 1}: Missing customer name`);
                 }
@@ -178,22 +181,20 @@ class TFUKParser {
                 if (!customer.postalCode.trim()) {
                     order.validationWarnings.push(`Customer ${index + 1}: Missing postal code`);
                 }
-                if (!customer.email.trim()) {
-                    order.validationWarnings.push(`Customer ${index + 1}: Missing email`);
-                } else if (!this.isValidEmail(customer.email)) {
-                    order.validationErrors.push(`Customer ${index + 1}: Invalid email format`);
+                
+                // Skip email validation for Amazon orders
+                if (!isAmazonOrder) {
+                    if (!customer.email.trim()) {
+                        order.validationWarnings.push(`Customer ${index + 1}: Missing email`);
+                    } else if (!this.isValidEmail(customer.email)) {
+                        order.validationErrors.push(`Customer ${index + 1}: Invalid email format`);
+                    }
                 }
+                
                 if (!customer.countryPhone.trim()) {
                     order.validationWarnings.push(`Customer ${index + 1}: Missing phone`);
                 }
             });
-        }
-
-        // Validate payment terms
-        if (!order.paymentTerms) {
-            order.validationWarnings.push('Missing payment terms');
-        } else if (!['FCA', 'DAP'].includes(order.paymentTerms)) {
-            order.validationWarnings.push('Unknown payment terms: ' + order.paymentTerms);
         }
 
         // Validate line items
@@ -269,8 +270,7 @@ class TFUKParser {
                         </h5>
                         <p class="mb-0 text-muted">
                             Date: ${this.formatDate(order.date)} | 
-                            Currency: ${order.currency} | 
-                            Payment Terms: ${order.paymentTerms} |
+                            Currency: ${order.currency} |
                             Items: ${order.lineItems.length}
                         </p>
                     </div>
