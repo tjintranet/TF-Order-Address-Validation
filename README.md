@@ -74,6 +74,7 @@ Note: The application has been specifically optimized for Safari compatibility.
 
 ### Special Handling
 - **Amazon Orders**: Email validation is automatically skipped for orders containing "Amazon" in the customer name, as these orders are delivered directly to Amazon warehouses
+- **Carrier Customers**: Email validation is skipped for carrier customers (customer codes starting with "CS") as these are shipping service providers, not end customers
 
 ## File Structure
 

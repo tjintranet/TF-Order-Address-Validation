@@ -172,6 +172,9 @@ class TFUKParser {
                 // Check if this is an Amazon order by looking at customer name
                 var isAmazonOrder = customer.customerName.toLowerCase().includes('amazon');
                 
+                // Check if this is a carrier customer (CS prefix)
+                var isCarrierCustomer = customer.customerCode.startsWith('CS');
+                
                 if (!customer.customerName.trim()) {
                     order.validationErrors.push(`Customer ${index + 1}: Missing customer name`);
                 }
@@ -185,8 +188,8 @@ class TFUKParser {
                     order.validationWarnings.push(`Customer ${index + 1}: Missing postal code`);
                 }
                 
-                // Skip email validation for Amazon orders
-                if (!isAmazonOrder) {
+                // Skip email validation for Amazon orders and carrier customers
+                if (!isAmazonOrder && !isCarrierCustomer) {
                     if (!customer.email.trim()) {
                         order.validationWarnings.push(`Customer ${index + 1}: Missing email`);
                     } else if (!this.isValidEmail(customer.email)) {
