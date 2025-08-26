@@ -45,12 +45,15 @@ class TFUKParser {
             const lines = this.fileContent.split('\n');
             this.orders = [];
             
+            // Reset the toggle to show all orders when new file is loaded
+            document.getElementById('hideValidToggle').checked = false;
+            
             let currentOrder = null;
             
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].replace('\r', '');
                 
-                if (line.startsWith('$$HDR') || line.startsWith('$$EOF')) {
+                if (line.startsWith('$HDR') || line.startsWith('$EOF')) {
                     continue;
                 }
                 
