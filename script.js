@@ -433,6 +433,13 @@ async function validateAddress(address) {
                 // Extract confidence score
                 result.confidence = props.rank?.confidence || 0;
                 
+                // Check for 0% confidence - treat as invalid
+                if (result.confidence === 0) {
+                    result.errors.push('Address found but with 0% confidence - likely invalid or very poor match');
+                    result.status = 'error';
+                    return result;
+                }
+                
                 // Store coordinates
                 result.lat = match.geometry.coordinates[1];
                 result.lon = match.geometry.coordinates[0];
