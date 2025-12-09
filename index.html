@@ -104,11 +104,6 @@
             height: 1rem;
         }
     </style>
-
-    <!-- Favicon -->
-      <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-      <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-
 </head>
 <body>
     <div class="container-fluid py-4">
@@ -116,7 +111,7 @@
             <div class="col-12">
                 <h1 class="text-center mb-4">
                     <i class="fas fa-map-marker-alt text-primary me-2"></i>
-                    T&F Order Address Validation
+                    Address Validator
                 </h1>
                 <p class="text-center text-muted mb-4">Powered by Geoapify API</p>
             </div>
@@ -220,9 +215,18 @@
                                 <button class="btn btn-outline-secondary" id="copyInvalidBtn">
                                     <i class="fas fa-copy me-2"></i>Copy Invalid Addresses
                                 </button>
-                                <button class="btn btn-success" id="exportCsvBtn">
-                                    <i class="fas fa-download me-2"></i>Export Results CSV
-                                </button>
+                                <div class="btn-group">
+                                    <button class="btn btn-success" id="exportExcelBtn">
+                                        <i class="fas fa-file-excel me-2"></i>Export Excel
+                                    </button>
+                                    <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span class="visually-hidden">Toggle Dropdown</span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="#" id="exportExcelDropdown"><i class="fas fa-file-excel me-2"></i>Export as Excel</a></li>
+                                        <li><a class="dropdown-item" href="#" id="exportCsvDropdown"><i class="fas fa-file-csv me-2"></i>Export as CSV</a></li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -279,6 +283,7 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="script.js"></script>
 </body>

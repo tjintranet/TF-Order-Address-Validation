@@ -6,6 +6,7 @@ const API_KEY_STORAGE = 'geoapify_api_key';
 let apiKey = null;
 let addresses = [];
 let validationResults = [];
+let uploadedFileName = '';
 
 // DOM Elements
 const apiKeySection = document.getElementById('apiKeySection');
@@ -26,7 +27,9 @@ const addressesSection = document.getElementById('addressesSection');
 const addressesContainer = document.getElementById('addressesContainer');
 const hideValidToggle = document.getElementById('hideValidToggle');
 const copyInvalidBtn = document.getElementById('copyInvalidBtn');
-const exportCsvBtn = document.getElementById('exportCsvBtn');
+const exportExcelBtn = document.getElementById('exportExcelBtn');
+const exportExcelDropdown = document.getElementById('exportExcelDropdown');
+const exportCsvDropdown = document.getElementById('exportCsvDropdown');
 
 // Statistics elements
 const totalAddressesEl = document.getElementById('totalAddresses');
@@ -46,7 +49,9 @@ function setupEventListeners() {
     fileInput.addEventListener('change', handleFileSelect);
     hideValidToggle.addEventListener('change', toggleValidAddresses);
     copyInvalidBtn.addEventListener('click', copyInvalidAddresses);
-    exportCsvBtn.addEventListener('click', exportResultsCsv);
+    exportExcelBtn.addEventListener('click', exportResultsExcel);
+    exportExcelDropdown.addEventListener('click', (e) => { e.preventDefault(); exportResultsExcel(); });
+    exportCsvDropdown.addEventListener('click', (e) => { e.preventDefault(); exportResultsCsv(); });
     
     // Allow Enter key to save API key
     apiKeyField.addEventListener('keypress', (e) => {
@@ -118,6 +123,10 @@ async function handleFileSelect(event) {
     
     try {
         const text = await file.text();
+        
+        // Store the uploaded filename (without extension)
+        uploadedFileName = file.name.replace(/\.txt$/i, '');
+        
         addresses = parseTFUKFile(text);
         
         if (addresses.length === 0) {
@@ -692,9 +701,75 @@ function copyInvalidAddresses() {
     showToast(`Copied ${invalid.length} invalid addresses`, 'success');
 }
 
+// Export Excel
+function exportResultsExcel() {
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    
+    // Prepare data for Excel
+    const data = validationResults.map(result => ({
+        'Order': result.orderNumber,
+        'Line': result.lineNumber,
+        'Customer Code': result.customerCode,
+        'Name': result.name,
+        'Address 1': result.address1,
+        'Address 2': result.address2,
+        'Address 3': result.address3,
+        'City': result.city,
+        'Postcode': result.postcode,
+        'Country': result.country,
+        'Email': result.email,
+        'Phone': result.phone,
+        'Status': result.status === 'success' ? 'Valid' : 'Invalid',
+        'Confidence': result.confidence > 0 ? (result.confidence * 100).toFixed(0) + '%' : '0%',
+        'Formatted Address': result.formattedAddress || '',
+        'Latitude': result.lat || '',
+        'Longitude': result.lon || '',
+        'Errors': result.errors.join('; ')
+    }));
+    
+    // Create worksheet from data
+    const ws = XLSX.utils.json_to_sheet(data);
+    
+    // Set column widths
+    const colWidths = [
+        { wch: 12 }, // Order
+        { wch: 6 },  // Line
+        { wch: 15 }, // Customer Code
+        { wch: 30 }, // Name
+        { wch: 30 }, // Address 1
+        { wch: 30 }, // Address 2
+        { wch: 30 }, // Address 3
+        { wch: 20 }, // City
+        { wch: 12 }, // Postcode
+        { wch: 10 }, // Country
+        { wch: 30 }, // Email
+        { wch: 15 }, // Phone
+        { wch: 10 }, // Status
+        { wch: 10 }, // Confidence
+        { wch: 40 }, // Formatted Address
+        { wch: 12 }, // Latitude
+        { wch: 12 }, // Longitude
+        { wch: 50 }  // Errors
+    ];
+    ws['!cols'] = colWidths;
+    
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Address Validation');
+    
+    // Generate filename with uploaded filename
+    const baseFilename = uploadedFileName || 'tfuk-address-validation';
+    const filename = `${baseFilename}_validation-results.xlsx`;
+    
+    // Write file
+    XLSX.writeFile(wb, filename);
+    
+    showToast('Results exported to Excel', 'success');
+}
+
 // Export CSV
 function exportResultsCsv() {
-    let csv = 'Order,Line,Customer Code,Name,Address1,Address2,Address3,City,Postcode,Country,Email,Phone,Status,Confidence,Formatted Address,Latitude,Longitude,Errors\n';
+    let csv = 'Order,Line,Customer Code,Name,Address 1,Address 2,Address 3,City,Postcode,Country,Email,Phone,Status,Confidence,Formatted Address,Latitude,Longitude,Errors\n';
     
     validationResults.forEach(result => {
         const row = [
@@ -710,8 +785,8 @@ function exportResultsCsv() {
             result.country,
             result.email,
             result.phone,
-            result.status,
-            (result.confidence * 100).toFixed(0) + '%',
+            result.status === 'success' ? 'Valid' : 'Invalid',
+            result.confidence > 0 ? (result.confidence * 100).toFixed(0) + '%' : '0%',
             result.formattedAddress || '',
             result.lat || '',
             result.lon || '',
@@ -726,7 +801,11 @@ function exportResultsCsv() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `tfuk-address-validation-${new Date().toISOString().split('T')[0]}.csv`;
+    
+    // Generate filename with uploaded filename
+    const baseFilename = uploadedFileName || 'tfuk-address-validation';
+    a.download = `${baseFilename}_validation-results.csv`;
+    
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
