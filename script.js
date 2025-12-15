@@ -27,6 +27,7 @@ const addressesSection = document.getElementById('addressesSection');
 const addressesContainer = document.getElementById('addressesContainer');
 const hideValidToggle = document.getElementById('hideValidToggle');
 const copyInvalidBtn = document.getElementById('copyInvalidBtn');
+const clearBtn = document.getElementById('clearBtn');
 const exportExcelBtn = document.getElementById('exportExcelBtn');
 const exportExcelDropdown = document.getElementById('exportExcelDropdown');
 const exportCsvDropdown = document.getElementById('exportCsvDropdown');
@@ -49,6 +50,7 @@ function setupEventListeners() {
     fileInput.addEventListener('change', handleFileSelect);
     hideValidToggle.addEventListener('change', toggleValidAddresses);
     copyInvalidBtn.addEventListener('click', copyInvalidAddresses);
+    clearBtn.addEventListener('click', clearResults);
     exportExcelBtn.addEventListener('click', exportResultsExcel);
     exportExcelDropdown.addEventListener('click', (e) => { e.preventDefault(); exportResultsExcel(); });
     exportCsvDropdown.addEventListener('click', (e) => { e.preventDefault(); exportResultsCsv(); });
@@ -812,6 +814,40 @@ function exportResultsCsv() {
     URL.revokeObjectURL(url);
     
     showToast('Results exported to CSV', 'success');
+}
+
+// Clear Results
+function clearResults() {
+    // Clear data
+    addresses = [];
+    validationResults = [];
+    uploadedFileName = '';
+    
+    // Reset file input
+    fileInput.value = '';
+    
+    // Hide all result sections
+    controlsSection.style.display = 'none';
+    statsSection.style.display = 'none';
+    addressesSection.style.display = 'none';
+    progressSection.style.display = 'none';
+    
+    // Clear containers
+    addressesContainer.innerHTML = '';
+    
+    // Reset statistics
+    totalAddressesEl.textContent = '0';
+    validAddressesEl.textContent = '0';
+    invalidAddressesEl.textContent = '0';
+    
+    // Reset toggle
+    hideValidToggle.checked = false;
+    
+    // Reset progress
+    progressBar.style.width = '0%';
+    progressText.textContent = '0 / 0';
+    
+    showToast('Results cleared', 'info');
 }
 
 // Utilities
