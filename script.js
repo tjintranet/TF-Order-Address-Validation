@@ -35,6 +35,7 @@ const exportCsvDropdown = document.getElementById('exportCsvDropdown');
 // Statistics elements
 const totalAddressesEl = document.getElementById('totalAddresses');
 const validAddressesEl = document.getElementById('validAddresses');
+const warningAddressesEl = document.getElementById('warningAddresses');
 const invalidAddressesEl = document.getElementById('invalidAddresses');
 
 // Initialize
@@ -444,10 +445,10 @@ async function validateAddress(address) {
                 // Extract confidence score
                 result.confidence = props.rank?.confidence || 0;
                 
-                // Check for 0% confidence - treat as invalid
+                // Check for 0% confidence - treat as warning (not error)
                 if (result.confidence === 0) {
-                    result.errors.push('Address found but with 0% confidence - likely invalid or very poor match');
-                    result.status = 'error';
+                    result.warnings.push('Address found but with 0% confidence - likely invalid or very poor match');
+                    result.status = 'warning';
                     return result;
                 }
                 
@@ -458,7 +459,7 @@ async function validateAddress(address) {
                 // Build formatted address
                 result.formattedAddress = props.formatted || searchText;
                 
-                // Mark as valid - ignore all Geoapify warnings
+                // Mark as valid
                 result.status = 'success';
                 apiSuccess = true;
                 
@@ -490,12 +491,14 @@ function displayResults() {
     const stats = {
         total: validationResults.length,
         valid: validationResults.filter(r => r.status === 'success').length,
+        warning: validationResults.filter(r => r.status === 'warning').length,
         invalid: validationResults.filter(r => r.status === 'error').length
     };
     
     // Update statistics
     totalAddressesEl.textContent = stats.total;
     validAddressesEl.textContent = stats.valid;
+    warningAddressesEl.textContent = stats.warning;
     invalidAddressesEl.textContent = stats.invalid;
     
     // Show sections
@@ -507,7 +510,7 @@ function displayResults() {
     renderAddresses();
     
     // Show summary toast
-    showToast(`Validation complete: ${stats.valid} valid, ${stats.invalid} invalid`, 'info');
+    showToast(`Validation complete: ${stats.valid} valid, ${stats.warning} warnings, ${stats.invalid} invalid`, 'info');
 }
 
 function renderAddresses() {
@@ -524,33 +527,24 @@ function createAddressCard(result, index) {
     card.className = `address-card validation-${result.status}`;
     card.dataset.status = result.status;
     
-    // Status badge - only success or error
+    // Status badge - success, warning, or error
     const statusBadge = result.status === 'success' ? 
         '<span class="badge bg-success badge-result">Valid</span>' :
-        '<span class="badge bg-danger badge-result">Invalid</span>';
+        result.status === 'warning' ?
+        '<span class="badge bg-warning text-dark badge-result">Warning</span>' :
+        '<span class="badge bg-danger badge-result">Error</span>';
     
-    // Confidence indicator
-    const confidencePercent = (result.confidence * 100).toFixed(0);
-    const confidenceColor = result.status === 'success' ? 'success' : 'danger';
-    
-    // Header
+    // Header - more compact
     const header = document.createElement('div');
     header.className = 'address-header';
     header.innerHTML = `
-        <div class="d-flex justify-content-between align-items-start">
+        <div class="d-flex justify-content-between align-items-center">
             <div>
-                <h5 class="mb-1">
-                    <i class="fas fa-map-marker-alt me-2"></i>
-                    ${escapeHtml(result.name || 'Order ' + result.orderNumber)}
-                </h5>
-                <small class="text-muted">Order: ${escapeHtml(result.orderNumber)} | Line: ${result.lineNumber}</small>
+                <strong>${escapeHtml(result.name || 'Order ' + result.orderNumber)}</strong>
+                <small class="text-muted ms-2">Order: ${escapeHtml(result.orderNumber)} | Line: ${result.lineNumber}</small>
             </div>
-            <div class="text-end">
+            <div>
                 ${statusBadge}
-                ${result.confidence > 0 ? `<div class="mt-2">
-                    <small class="text-muted">Confidence: </small>
-                    <span class="badge bg-${confidenceColor}">${confidencePercent}%</span>
-                </div>` : ''}
             </div>
         </div>
     `;
@@ -560,13 +554,12 @@ function createAddressCard(result, index) {
     details.className = 'address-details';
     
     let detailsHTML = '<div class="row"><div class="col-md-6">';
-    detailsHTML += '<h6 class="mb-3"><i class="fas fa-file-alt me-2"></i>Input Address (TFUK)</h6>';
     
-    // Input address
-    if (result.customerCode) detailsHTML += `<div class="detail-row"><span class="detail-label">Customer Code:</span> <span class="detail-value">${escapeHtml(result.customerCode)}</span></div>`;
-    if (result.address1) detailsHTML += `<div class="detail-row"><span class="detail-label">Address 1:</span> <span class="detail-value">${escapeHtml(result.address1)}</span></div>`;
-    if (result.address2) detailsHTML += `<div class="detail-row"><span class="detail-label">Address 2:</span> <span class="detail-value">${escapeHtml(result.address2)}</span></div>`;
-    if (result.address3) detailsHTML += `<div class="detail-row"><span class="detail-label">Address 3:</span> <span class="detail-value">${escapeHtml(result.address3)}</span></div>`;
+    // Input address - more compact
+    if (result.customerCode) detailsHTML += `<div class="detail-row"><span class="detail-label">Code:</span> <span class="detail-value">${escapeHtml(result.customerCode)}</span></div>`;
+    if (result.address1) detailsHTML += `<div class="detail-row"><span class="detail-label">Address:</span> <span class="detail-value">${escapeHtml(result.address1)}</span></div>`;
+    if (result.address2) detailsHTML += `<div class="detail-row"><span class="detail-label"></span> <span class="detail-value">${escapeHtml(result.address2)}</span></div>`;
+    if (result.address3) detailsHTML += `<div class="detail-row"><span class="detail-label"></span> <span class="detail-value">${escapeHtml(result.address3)}</span></div>`;
     if (result.city) detailsHTML += `<div class="detail-row"><span class="detail-label">City:</span> <span class="detail-value">${escapeHtml(result.city)}</span></div>`;
     if (result.postcode) detailsHTML += `<div class="detail-row"><span class="detail-label">Postcode:</span> <span class="detail-value">${escapeHtml(result.postcode)}</span></div>`;
     if (result.country) detailsHTML += `<div class="detail-row"><span class="detail-label">Country:</span> <span class="detail-value">${escapeHtml(result.country)}</span></div>`;
@@ -577,15 +570,14 @@ function createAddressCard(result, index) {
     
     // Validated result
     if (result.formattedAddress) {
-        detailsHTML += '<h6 class="mb-3"><i class="fas fa-check-circle me-2"></i>Validated Address</h6>';
-        detailsHTML += `<div class="formatted-address">${escapeHtml(result.formattedAddress)}</div>`;
+        detailsHTML += `<div class="detail-row"><span class="detail-label">Validated:</span> <span class="detail-value">${escapeHtml(result.formattedAddress)}</span></div>`;
         
         if (result.lat && result.lon) {
-            detailsHTML += `<div class="detail-row mt-2">
-                <span class="detail-label">Coordinates:</span> 
+            detailsHTML += `<div class="detail-row">
+                <span class="detail-label">Map:</span> 
                 <span class="detail-value">
                     <a href="https://www.google.com/maps?q=${result.lat},${result.lon}" target="_blank">
-                        ${result.lat.toFixed(6)}, ${result.lon.toFixed(6)} <i class="fas fa-external-link-alt ms-1"></i>
+                        ${result.lat.toFixed(4)}, ${result.lon.toFixed(4)} <i class="fas fa-external-link-alt"></i>
                     </a>
                 </span>
             </div>`;
@@ -594,23 +586,32 @@ function createAddressCard(result, index) {
     
     detailsHTML += '</div></div>';
     
-    // Errors only (no warnings)
-    if (result.errors.length > 0) {
-        detailsHTML += '<div class="mt-3">';
-        detailsHTML += '<div class="alert alert-danger mb-0">';
-        detailsHTML += '<strong><i class="fas fa-exclamation-circle me-2"></i>Errors:</strong><ul class="mb-0 mt-2">';
-        result.errors.forEach(err => {
-            detailsHTML += `<li>${escapeHtml(err)}</li>`;
-        });
-        detailsHTML += '</ul></div>';
+    // Errors and warnings - more compact
+    if (result.errors.length > 0 || result.warnings.length > 0) {
+        detailsHTML += '<div class="mt-2">';
+        
+        if (result.errors.length > 0) {
+            detailsHTML += '<div class="alert alert-danger mb-1">';
+            detailsHTML += '<strong><i class="fas fa-exclamation-circle me-1"></i>Errors:</strong> ';
+            detailsHTML += result.errors.join('; ');
+            detailsHTML += '</div>';
+        }
+        
+        if (result.warnings.length > 0) {
+            detailsHTML += '<div class="alert alert-warning mb-1">';
+            detailsHTML += '<strong><i class="fas fa-exclamation-triangle me-1"></i>Warnings:</strong> ';
+            detailsHTML += result.warnings.join('; ');
+            detailsHTML += '</div>';
+        }
+        
         detailsHTML += '</div>';
     }
     
     // Copy button
     detailsHTML += `
-        <div class="mt-3 text-end">
+        <div class="mt-2 text-end">
             <button class="btn btn-sm btn-outline-secondary copy-btn" onclick="copyAddressDetails(${index})">
-                <i class="fas fa-copy me-1"></i>Copy Details
+                <i class="fas fa-copy me-1"></i>Copy
             </button>
         </div>
     `;
@@ -629,7 +630,10 @@ function toggleValidAddresses() {
     const cards = document.querySelectorAll('.address-card');
     
     cards.forEach(card => {
-        if (hideValid && card.dataset.status === 'success') {
+        const status = card.dataset.status;
+        // Only hide if toggle is checked AND status is success
+        // Show errors and warnings when toggle is checked
+        if (hideValid && status === 'success') {
             card.style.display = 'none';
         } else {
             card.style.display = 'block';
@@ -646,8 +650,7 @@ function copyAddressDetails(index) {
     text += `Line: ${result.lineNumber}\n`;
     text += `Customer: ${result.name}\n`;
     text += `Customer Code: ${result.customerCode}\n`;
-    text += `Status: ${result.status}\n`;
-    text += `Confidence: ${(result.confidence * 100).toFixed(0)}%\n\n`;
+    text += `Status: ${result.status === 'success' ? 'Valid' : result.status === 'warning' ? 'Warning' : 'Error'}\n\n`;
     
     text += `Input Address:\n`;
     if (result.address1) text += `  ${result.address1}\n`;
@@ -672,6 +675,11 @@ function copyAddressDetails(index) {
         result.errors.forEach(err => text += `  - ${err}\n`);
     }
     
+    if (result.warnings.length > 0) {
+        text += `\nWarnings:\n`;
+        result.warnings.forEach(warn => text += `  - ${warn}\n`);
+    }
+    
     copyToClipboard(text);
     showToast('Address details copied to clipboard', 'success');
 }
@@ -686,16 +694,45 @@ function copyInvalidAddresses() {
     
     let text = `TFUK Invalid Addresses Report\n`;
     text += `==============================\n`;
-    text += `Total: ${invalid.length}\n\n`;
+    text += `Total Errors: ${invalid.length}\n\n`;
     
     invalid.forEach((result, idx) => {
-        text += `${idx + 1}. Order ${result.orderNumber} - ${result.name || 'Unnamed'}\n`;
-        text += `   Line: ${result.lineNumber}\n`;
-        text += `   Address: ${result.address1}${result.address2 ? ', ' + result.address2 : ''}, ${result.city}, ${result.postcode}\n`;
+        text += `\n${idx + 1}. TFUK Address Validation Result\n`;
+        text += `==============================\n`;
+        text += `Order: ${result.orderNumber}\n`;
+        text += `Line: ${result.lineNumber}\n`;
+        text += `Customer: ${result.name}\n`;
+        text += `Customer Code: ${result.customerCode}\n`;
+        text += `Status: Error\n\n`;
+        
+        text += `Input Address:\n`;
+        if (result.address1) text += `  ${result.address1}\n`;
+        if (result.address2) text += `  ${result.address2}\n`;
+        if (result.address3) text += `  ${result.address3}\n`;
+        if (result.city) text += `  ${result.city}\n`;
+        if (result.postcode) text += `  ${result.postcode}\n`;
+        if (result.country) text += `  ${result.country}\n`;
+        if (result.email) text += `  Email: ${result.email}\n`;
+        if (result.phone) text += `  Phone: ${result.phone}\n`;
+        
+        if (result.formattedAddress) {
+            text += `\nValidated Address:\n  ${result.formattedAddress}\n`;
+        }
+        
+        if (result.lat && result.lon) {
+            text += `\nCoordinates: ${result.lat.toFixed(6)}, ${result.lon.toFixed(6)}\n`;
+        }
         
         if (result.errors.length > 0) {
-            text += `   Errors: ${result.errors.join('; ')}\n`;
+            text += `\nErrors:\n`;
+            result.errors.forEach(err => text += `  - ${err}\n`);
         }
+        
+        if (result.warnings.length > 0) {
+            text += `\nWarnings:\n`;
+            result.warnings.forEach(warn => text += `  - ${warn}\n`);
+        }
+        
         text += `\n`;
     });
     
@@ -722,12 +759,12 @@ function exportResultsExcel() {
         'Country': result.country,
         'Email': result.email,
         'Phone': result.phone,
-        'Status': result.status === 'success' ? 'Valid' : 'Invalid',
-        'Confidence': result.confidence > 0 ? (result.confidence * 100).toFixed(0) + '%' : '0%',
+        'Status': result.status === 'success' ? 'Valid' : result.status === 'warning' ? 'Warning' : 'Error',
         'Formatted Address': result.formattedAddress || '',
         'Latitude': result.lat || '',
         'Longitude': result.lon || '',
-        'Errors': result.errors.join('; ')
+        'Errors': result.errors.join('; '),
+        'Warnings': result.warnings.join('; ')
     }));
     
     // Create worksheet from data
@@ -748,11 +785,11 @@ function exportResultsExcel() {
         { wch: 30 }, // Email
         { wch: 15 }, // Phone
         { wch: 10 }, // Status
-        { wch: 10 }, // Confidence
         { wch: 40 }, // Formatted Address
         { wch: 12 }, // Latitude
         { wch: 12 }, // Longitude
-        { wch: 50 }  // Errors
+        { wch: 50 }, // Errors
+        { wch: 50 }  // Warnings
     ];
     ws['!cols'] = colWidths;
     
@@ -771,7 +808,7 @@ function exportResultsExcel() {
 
 // Export CSV
 function exportResultsCsv() {
-    let csv = 'Order,Line,Customer Code,Name,Address 1,Address 2,Address 3,City,Postcode,Country,Email,Phone,Status,Confidence,Formatted Address,Latitude,Longitude,Errors\n';
+    let csv = 'Order,Line,Customer Code,Name,Address 1,Address 2,Address 3,City,Postcode,Country,Email,Phone,Status,Formatted Address,Latitude,Longitude,Errors,Warnings\n';
     
     validationResults.forEach(result => {
         const row = [
@@ -787,12 +824,12 @@ function exportResultsCsv() {
             result.country,
             result.email,
             result.phone,
-            result.status === 'success' ? 'Valid' : 'Invalid',
-            result.confidence > 0 ? (result.confidence * 100).toFixed(0) + '%' : '0%',
+            result.status === 'success' ? 'Valid' : result.status === 'warning' ? 'Warning' : 'Error',
             result.formattedAddress || '',
             result.lat || '',
             result.lon || '',
-            result.errors.join('; ')
+            result.errors.join('; '),
+            result.warnings.join('; ')
         ].map(v => `"${String(v).replace(/"/g, '""')}"`);
         
         csv += row.join(',') + '\n';
@@ -838,6 +875,7 @@ function clearResults() {
     // Reset statistics
     totalAddressesEl.textContent = '0';
     validAddressesEl.textContent = '0';
+    warningAddressesEl.textContent = '0';
     invalidAddressesEl.textContent = '0';
     
     // Reset toggle

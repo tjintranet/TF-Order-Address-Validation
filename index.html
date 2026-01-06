@@ -6,6 +6,10 @@
     <title>Address Validator - Geoapify</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+        <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     
     <style>
         body {
@@ -31,21 +35,25 @@
         }
         .address-card {
             border: 1px solid #dee2e6;
-            border-radius: 6px;
-            margin-bottom: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
         }
         .address-header {
             background-color: #f8f9fa;
             border-bottom: 1px solid #dee2e6;
-            padding: 0.6rem 0.75rem;
-            border-radius: 6px 6px 0 0;
+            padding: 0.4rem 0.6rem;
+            border-radius: 4px 4px 0 0;
+            font-size: 0.875rem;
         }
         .address-header h5 {
             font-size: 1rem;
             margin-bottom: 0.25rem;
         }
+        .address-header strong {
+            font-size: 0.875rem;
+        }
         .address-details {
-            padding: 0.75rem;
+            padding: 0.5rem 0.6rem;
         }
         .stats-card {
             background: #f8f9fa;
@@ -103,9 +111,9 @@
             margin: 0 auto 1.5rem;
         }
         .detail-row {
-            padding: 0.35rem 0;
+            padding: 0.2rem 0;
             border-bottom: 1px solid #f0f0f0;
-            font-size: 0.875rem;
+            font-size: 0.8rem;
         }
         .detail-row:last-child {
             border-bottom: none;
@@ -113,13 +121,13 @@
         .detail-label {
             font-weight: 600;
             color: #495057;
-            min-width: 100px;
+            min-width: 70px;
             display: inline-block;
-            font-size: 0.875rem;
+            font-size: 0.8rem;
         }
         .detail-value {
             color: #212529;
-            font-size: 0.875rem;
+            font-size: 0.8rem;
             word-break: break-word;
         }
         .formatted-address {
@@ -155,9 +163,9 @@
             margin-bottom: 0.5rem;
         }
         .alert {
-            padding: 0.5rem 0.75rem;
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
+            padding: 0.35rem 0.5rem;
+            margin-bottom: 0.25rem;
+            font-size: 0.8rem;
         }
         .alert ul {
             margin-bottom: 0;
@@ -283,7 +291,7 @@
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" id="hideValidToggle">
                                     <label class="form-check-label" for="hideValidToggle">
-                                        Show only invalid addresses
+                                        Show errors and warnings only
                                     </label>
                                 </div>
                                 <button class="btn btn-outline-danger btn-sm" id="clearBtn">
@@ -338,9 +346,18 @@
                     <div class="stats-col">
                         <div class="card stats-card">
                             <div class="card-body text-center">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-2 text-warning"></i>
+                                <h4 class="mb-0 text-dark" id="warningAddresses">0</h4>
+                                <small class="text-muted">Warnings</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stats-col">
+                        <div class="card stats-card">
+                            <div class="card-body text-center">
                                 <i class="fas fa-times-circle fa-2x mb-2 text-danger"></i>
                                 <h4 class="mb-0 text-dark" id="invalidAddresses">0</h4>
-                                <small class="text-muted">Invalid Addresses</small>
+                                <small class="text-muted">Errors</small>
                             </div>
                         </div>
                     </div>
